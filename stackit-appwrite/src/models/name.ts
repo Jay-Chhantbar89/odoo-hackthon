@@ -1,6 +1,0 @@
-export const db="main-stackit"
-export const questionCollection="questions"
-export const answerCollection="answers"
-export const commentCollection="commentss"
-export const voteCollection="votes"
-export const questionAttachementBucket="question-attachment"
