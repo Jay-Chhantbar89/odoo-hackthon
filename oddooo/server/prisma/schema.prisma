@@ -1,0 +1,131 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  username  String   @unique
+  password  String
+  role      String   @default("USER")
+  avatar    String?
+  bio       String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  questions    Question[]
+  answers      Answer[]
+  comments     Comment[]
+  votes        Vote[]
+  notifications Notification[]
+  mentions     Mention[]
+
+  @@map("users")
+}
+
+model Question {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  tags        Tag[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  authorId    String
+  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  answers     Answer[]
+  votes       Vote[]
+  acceptedAnswerId String?
+  acceptedAnswer Answer? @relation("AcceptedAnswer", fields: [acceptedAnswerId], references: [id])
+
+  @@map("questions")
+}
+
+model Answer {
+  id          String   @id @default(cuid())
+  content     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  authorId    String
+  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  questionId  String
+  question    Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  comments    Comment[]
+  votes       Vote[]
+  acceptedFor Question[] @relation("AcceptedAnswer")
+
+  @@map("answers")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  answerId  String
+  answer    Answer   @relation(fields: [answerId], references: [id], onDelete: Cascade)
+
+  @@map("comments")
+}
+
+model Tag {
+  id        String     @id @default(cuid())
+  name      String     @unique
+  questions Question[]
+  createdAt DateTime   @default(now())
+
+  @@map("tags")
+}
+
+model Vote {
+  id         String   @id @default(cuid())
+  value      Int      // 1 for upvote, -1 for downvote
+  createdAt  DateTime @default(now())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questionId String?
+  question   Question? @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  answerId   String?
+  answer     Answer?   @relation(fields: [answerId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, questionId])
+  @@unique([userId, answerId])
+  @@map("votes")
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  type      String
+  message   String
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questionId String?
+  answerId  String?
+  commentId String?
+
+  @@map("notifications")
+}
+
+model Mention {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questionId String?
+  answerId  String?
+  commentId String?
+
+  @@map("mentions")
+} 
